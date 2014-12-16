@@ -1,0 +1,33 @@
+#! /usr/bin/python
+import sys
+# also available at http://www.gnu.org/copyleft/gpl.html.
+from optparse import OptionParser
+from licenseimport.license_util.license_run import run
+def parse_cmdline():
+    """Parses the relevant cmdline arguments
+    """
+    parser = OptionParser()
+    parser.add_option("--name",
+                      dest="defaults",
+                      help="Your Orgnazation Name")
+    parser.add_option("--license",
+                      action='store_true',
+                      dest="dry",
+                      default=False,
+                      help="license NO.")
+    print "dddddddddddddddd"
+    return parser
+
+
+if __name__ == "__main__":
+
+    options, args = parser_cmdline().parse_args(argv[1:])
+
+    print options
+    print args
+
+    args=sys.argv
+    name=args[1]
+    license=args[2]
+    run(name,license)
+
