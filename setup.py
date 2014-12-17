@@ -17,12 +17,16 @@ import sys
 from glob import glob
 
 class build_py(build_py):
-    def get_module_outfile(self, build_dir, package, module):
+    def get_module_outfile(self, build_dir, package, module,module_file):
         #if 'plugin' in list(package)[0]:
         #    outfile_path = [build_dir] + list(package) + [module + ".py"]
 
         #else: 
-        outfile_path = [build_dir] + list(package) + [module + ".pyc"]
+        if os.path.splitext(module_file)[1] =='.py': 
+            outfile_path = [build_dir] + list(package) + [module + ".py"]
+        elif os.path.splitext(module_file)[1] =='.pyc': 
+            outfile_path = [build_dir] + list(package) + [module + ".pyc"]
+
         return os.path.join(*outfile_path)
 
     def run(self):
@@ -52,6 +56,42 @@ class build_py(build_py):
         if self.packages:
             self.build_packages()
             self.build_package_data()
+    def get_outputs(self, include_bytecode=1):
+        modules = self.find_all_modules()
+        outputs = []
+        for (package, module, module_file) in modules:
+            package = package.split('.')
+            filename = self.get_module_outfile(self.build_lib, package, module,module_file)
+            outputs.append(filename)
+            if include_bytecode:
+                if self.compile:
+                    outputs.append(filename + "c")
+                if self.optimize > 0:
+                    outputs.append(filename + "o")
+
+        outputs += [
+            os.path.join(build_dir, filename)
+            for package, src_dir, build_dir, filenames in self.data_files
+            for filename in filenames
+            ]
+
+        return outputs
+
+    def build_module(self, module, module_file, package):
+        if isinstance(package, str):
+            package = package.split('.')
+        elif not isinstance(package, (list, tuple)):
+            raise TypeError(
+                  "'package' must be a string (dot-separated), list, or tuple")
+
+        # Now put the module source file into the "build" area -- this is
+        # easy, we just copy it somewhere under self.build_lib (the build
+        # directory for Python source).
+        outfile = self.get_module_outfile(self.build_lib, package, module,module_file)
+        dir = os.path.dirname(outfile)
+        self.mkpath(dir)
+        return self.copy_file(module_file, outfile, preserve_mode=0)
+
 
     def find_package_modules(self, package, package_dir):
         self.check_package(package, package_dir)
@@ -59,7 +99,7 @@ class build_py(build_py):
         #if '_plugin' in package_dir:
         #    module_files = glob(os.path.join(package_dir, "*.py"))
         #else:
-        module_files = glob(os.path.join(package_dir, "*.pyc"))
+        module_files = glob(os.path.join(package_dir, "*.py*"))
         modules = []
         setup_script = os.path.abspath(self.distribution.script_name)
 
@@ -89,7 +129,7 @@ class InstallLib(install_lib):
                 file = os.path.join(root, i)
                 if os.path.splitext(i)[1] == '.pyc':
                     cfile = os.path.join(current, i)    
-                else:
+                elif os.path.splitext(i)[1] == '.py':
                     cfile = os.path.join(current, i) + "c"
                 cfile_base = os.path.basename(cfile)
                 #if self.force: #or newer(file, cfile):

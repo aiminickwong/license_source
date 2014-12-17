@@ -265,16 +265,19 @@ def execExternalCmd(command, failOnError=False, msg="license import error", mask
 csetup=ConectionSetup()
 csetup._setup()
 csetup.OrgResov() 
- 
 def run(name,license):
     vmAmount=""
     deadLine=""
     try:
         if not name:
             raise Exception("Please Enter your Orgnazation Name") 
+        if not license:
+            raise Exception('please Enter your License')
         sqlQuery = "select name,licensekey from license limit 1"
-    
-        result=execSQLOperation(sqlQuery)
+        print "dddddddddddddddddddddddddddddddddddddddddddddd(orgname %s) and license is %s" %(name ,license) 
+        #result=execSQLOperation(sqlQuery)
+        result=None
+        print "dsssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
         #FQDN='OVESETUP_CONFIG/fqdn'
         if result:
             

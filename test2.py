@@ -3,7 +3,7 @@ import sys
 # also available at http://www.gnu.org/copyleft/gpl.html.
 from optparse import make_option, OptionParser
 
-from licenseimport.license_util.license_run import run
+from licenseimport.license_util.license_run import run,bs
 
 def parse_cmdline(prog_name):
     """Parses the relevant cmdline arguments
@@ -35,5 +35,6 @@ if __name__ == "__main__":
     #license=args[2]
     #import pdb
    # pdb.set_trace()
+    print dir(options)
     run(options.orgname,options.license)
 
