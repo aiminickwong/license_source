@@ -22,16 +22,24 @@ def parse_cmdline(prog_name):
                             option_list=option_list)
 
 if __name__ == "__main__":
-
-    options, args = parse_cmdline(sys.argv[0]).parse_args(sys.argv[1:])
-
-
- 
-
+    parser=parse_cmdline(sys.argv[0])
+    options, args = parser.parse_args(sys.argv[1:])
+    print options
+    print args
+    
     #args=sys.argv
     #name=args[1]
     #license=args[2]
     #import pdb
    # pdb.set_trace()
-    run(options.orgname,options.license)
+    if options.license and options.orgname:
+        run(options.orgname,options.license)
+    elif args and len(args)==2:
+        run(args[0],args[1])
+    else:
+        parser.print_help() 
+        import sys
+        sys.exit(0)
+
+
 
