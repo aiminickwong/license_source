@@ -102,12 +102,15 @@ class Plugin(plugin.PluginBase):
                     )
                     self.vmAmount=''
                     self.deadLine=''
+                    break
+ 
             except Exception as e:
                 self.logger.error(
                    _('License key format error : %s' %e)
                 )
                 self.vmAmount=''
                 self.deadLine=''
+                break
 
 
 
