@@ -24,10 +24,11 @@ class build_py(build_py):
         #else: 
         if os.path.splitext(module_file)[1] =='.py': 
             outfile_path = [build_dir] + list(package) + [module + ".py"]
+            return os.path.join(*outfile_path)
+
         elif os.path.splitext(module_file)[1] =='.pyc': 
             outfile_path = [build_dir] + list(package) + [module + ".pyc"]
-
-        return os.path.join(*outfile_path)
+            return os.path.join(*outfile_path)
 
     def run(self):
         # XXX copy_file by default preserves atime and mtime.  IMHO this is

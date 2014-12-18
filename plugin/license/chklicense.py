@@ -88,14 +88,14 @@ class Plugin(plugin.PluginBase):
                     self.logger.error(
                        _('License is Expired')
                     )
-                    continue
+                    raise Exception('LICENSE IS EXPIRED')
                 mac = get_hardwareid.get_hardwareid(license)
                 #if (licenseName == md5.strmd5(mac)[0:4]):
 	        if ( mac == True ):
                     self.vmAmount = licenseDe[4:8]
                     self.deadLine = licenseDe[8:16]
-                # print "license key format success"
                     break
+                # print "license key format success"
                 else:
                     self.logger.error(
                        _('INVALID LICENSE')
