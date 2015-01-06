@@ -1,0 +1,128 @@
+1.release note:
+ 本程序功能是在ovirt-engine,engine-setup命令中加入的license输入和验证
+ 
+2.制作rpm包:
+    配置文件为 源代码路径/setup.py,运行python setup.py bdist_rpm --force-arch=x86_64 即可.
+    配置参数(以下是例子,详情清看源代码):
+    在setup.py中的调用setup函数部分,看注释:
+    setup(
+      name = "licenseimport",#软件包名称
+      description = "License import check and save",#描述
+      cmdclass={"install_lib": InstallLib,'build_py':build_py}, #自定义的编译类和安装类,类实现请看源代码
+      version="1.0",#版本
+      data_files=[('/usr/bin', ['licenseimport/engine-licenseimport'])],#将engine-licenseimport 复制到/usr/bin目录下
+      packages = ['plugin','plugin/license','licenseimport','licenseimport/license_util'], #需要安装的包
+   
+)
+
+
+3.安装
+  1.源代码(license_source)：python setup.py install 或 rpm 包: rpm -ivh licenseimport-1.0-1.x86_64.rpm
+  2.修改ovirt-engine 中的/usr/share/ovirt-engine/setup/bin/ovirt-engine-setup中baseenv变量,例如:
+    "\"APPEND:BASE/pluginPath=str:${scriptdir}/../plugins:/usr/lib/python2.7/site-packages/plugin\" APPEND:BASE/pluginGroups=str:ovirt-engine-common:ovirt-engine-setup:license"
+    APPEND:BASE/pluginPath是plugin的位置例如:/usr/lib/python2.7/site-packages/plugin，engine-setup会根据在这里配置的位置加载plugin,pluginGroups是要加载的plugin的名字，例如license,
+    完整的plugin路径就是/usr/lib/python2.7/site-packages/plugin/license。
+    如果ovirt-engine安装包已经修改此变量，则安装完成后无需执行这一步。
+  3.运行:
+    安装后直接engine-setup，安装过程中会弹出一个对话框需要用户输入license.
+ 
+3.plugins加载与编写:
+  plugin是通过otopi.context.Context类的实例方法_loadPlugins根据在ovirt_engine/setup/bin/ovirt_engine_setup中配置的BASEENV变量
+  来找到要加载的plugin,该变量通过pluginPath定义路径查找位置，pluginGroups定义查找plugin名.
+  步骤:
+  1.查找plugin:
+    _loadPlugin方法根据定义的路径(参数:base,path),找到该package的__init__模块;
+  2.模块名处理:
+  3.调用util.loadModule方法
+    该方法根据模块的路径将模块加载到sys.modules;
+  4.执行模块的createPlugins实例方法
+  
+  根据以上加载plugin步骤，可以如下编写一个plugin:
+  1.继承:
+      plugin编写需要继承otopi.plugin.PluginBase类，构建函数需要接受一个otopi.context.Context类实例,在PluginBase的__init__函数中,将调用
+      otopi.context.Context类实例的registerPlugin方法，将当前的plugin实例注册。例如:
+     
+      def __init__(self, context):
+        """Constructor.
+        otopi.plugin.PluginBase.__init__
+        Keyword arguments:
+        context -- context to use.
+
+        """
+        super(PluginBase, self).__init__()
+        self._context = context
+        context.registerPlugin(self) #注册当前plugin类实例
+    
+      
+      @util.export
+      class Plugin(plugin.PluginBase):
+        '''自定义的plugin类，位于plugin/license/chklicense.py'''
+        
+        def __init__(self, context):
+            super(Plugin, self).__init__(context=context)
+            self._enabled = True
+
+
+      
+  2.编写功能函数:
+    函数如果要被engine在setup阶段执行必须要有meta decorate,例如:
+    @plugin.event(
+          stage=plugin.Stages.STAGE_CUSTOMIZATION,
+          priority=plugin.Stages.PRIORITY_FIRST,
+          name="license._validate_license",
+          after=('TUI._TUI_startup',)
+        )
+    详细见程序细节
+  3.修改/增加同package下面的__init__.py文件:
+      需要在模块所处的package的__init__.py中实现一个createPlugins方法，该方法初始化所有在该package下的所有要用到的plugin，
+      例如:
+      #{%PYTHONLIB%}/site-packages/plugin/license/chklicense.py  
+      from otopi import util
+      from . import chklicense
+    
+      @util.export
+      def createPlugins(context):
+          chklicense.Plugin(context=context)
+    
+4.程序细节:
+  1.plugin({%PYTHONLIB%}/site-packages/plugin)
+      这个文件夹包含license的plugin,plugin的实现逻辑在license/chklicense.py中,plugin的编写格式和普通的ovirt-engine plugin编写格式一样。
+      1._validate_license函数
+        函数meta信息为:
+        @plugin.event(
+          stage=plugin.Stages.STAGE_CUSTOMIZATION,
+          priority=plugin.Stages.PRIORITY_FIRST,
+          name="license._validate_license",
+          after=('TUI._TUI_startup',)
+        )
+        1.stage:函数的执行阶段，即：在哪个阶段执行这个函数
+        2.priority:函数的执行优先级，载同一个阶段中，函数执行的优先级。
+        3.名称
+        4.在同一个优先级中的函数的执行顺序.
+       
+      2._save_license 函数
+        meta信息为:
+        @plugin.event(
+        stage=plugin.Stages.STAGE_MISC,
+        condition=lambda self: self._enabled,
+        priority=plugin.Stages.PRIORITY_LAST+20
+        )
+        1.stage:函数的执行阶段，即：在哪个阶段执行这个函数
+        2.priority:函数的执行优先级，载同一个阶段中，函数执行的优先级。
+        3.名称
+        4.在同一个优先级中的函数的执行顺序.
+  2.licenseimport({%PYTHONLIB%}/site-packages/licenseimport)
+      更新license的程序
+      流程:
+      1.运行命令:engine-licenseimport --name=** --license=** ;
+      2.engine-licenseimport获得name 和license参数;
+      3.调用licenseimport/license_run.py 的run函数;
+      4.检查name合法性,1.是否为空，2.是否在数据库中已经存在;
+      5.检查license的合法性，1.是否过期，2.是否和本机mac地址匹配，3.license格式是否正确
+      6.更新/保存name和license对。
+      
+  
+      
+      
+
+
