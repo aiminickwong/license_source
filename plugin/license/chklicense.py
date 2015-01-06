@@ -77,7 +77,17 @@ class Plugin(plugin.PluginBase):
             #    hint=hint,
             #    prompt=True,
             #)
-            license=self.context.TUI_configuration.get('OVESETUP_LICENSE')
+            if self.environment.get("ORG_LICENSE") is not None:
+                license=self.environment["ORG_LICENSE"] 
+            else:
+                license=dialog.validate_license(
+                dialog=self.dialog,
+                name='OVESETUP_LICENSE',
+                note=(_('Please Enter your license:'),),
+                hint=hint,
+                prompt=True,
+                )
+ 
             self.license=license
             try:
                 licenseDe = des.strdesde(license,desKey)
@@ -102,7 +112,6 @@ class Plugin(plugin.PluginBase):
                     )
                     self.vmAmount=''
                     self.deadLine=''
-                    break
  
             except Exception as e:
                 self.logger.error(
@@ -110,7 +119,6 @@ class Plugin(plugin.PluginBase):
                 )
                 self.vmAmount=''
                 self.deadLine=''
-                break
 
 
 

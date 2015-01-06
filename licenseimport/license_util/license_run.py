@@ -274,10 +274,8 @@ def run(name,license):
         if not license:
             raise Exception('please Enter your License')
         sqlQuery = "select name,licensekey from license limit 1"
-        print "dddddddddddddddddddddddddddddddddddddddddddddd(orgname %s) and license is %s" %(name ,license) 
         #result=execSQLOperation(sqlQuery)
         result=None
-        print "dsssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
         #FQDN='OVESETUP_CONFIG/fqdn'
         if result:
             

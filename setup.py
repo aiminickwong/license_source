@@ -157,11 +157,11 @@ class InstallLib(install_lib):
 setup(
 name = "licenseimport",  
 description = "License import check and save",  
-cmdclass={"install_lib": InstallLib,'build_py':build_py},
+cmdclass={'build_py':build_py},
 version="1.0",
 #ipackage_data={'licenseimport/license_util': ['license_run.pyc']},
 packages = ['plugin','plugin/license','licenseimport','licenseimport/license_util'],
-#data_files=[('licenseimport/license_util', ['license_run'])],
+data_files=[('/usr/bin', ['licenseimport/engine-licenseimport'])],
 #package_data={'.':['__init__.pyc','des.pyc','get_hardwareid.pyc','license_run.py','md5.pyc']}
 #py_modules=['__init__','des','get_hardwareid','license_run','md5']
 
@@ -169,5 +169,5 @@ packages = ['plugin','plugin/license','licenseimport','licenseimport/license_uti
 paths=os.environ['PATH']
 paths=paths.split(":")
 
-shutil.copy('engine-licenseimport','/usr/bin/')
+#shutil.copy('engine-licenseimport','/usr/bin/')
  
